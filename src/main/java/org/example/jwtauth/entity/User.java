@@ -35,7 +35,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Roles roles;
 
-    @OneToMany(mappedBy = "user",  cascade = CascadeType.ALL,  fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user",  cascade = CascadeType.ALL,  orphanRemoval = true)
     private List<Token> token;
 
 

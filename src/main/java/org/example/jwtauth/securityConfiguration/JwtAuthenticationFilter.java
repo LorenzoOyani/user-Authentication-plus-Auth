@@ -1,8 +1,9 @@
-package org.example.jwtauth.config;
+package org.example.jwtauth.securityConfiguration;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.jwtauth.service.JWTokenProviderService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,12 +25,12 @@ import java.nio.file.AccessDeniedException;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JWTokenProvider jwTokenProvider;
+    private final JWTokenProviderService jwTokenProvider;
 
     private final UserDetailsService userDetailsService;
 
 
-    public JwtAuthenticationFilter(JWTokenProvider jwTokenProvider, UserDetailsService userDetailsService) {
+    public JwtAuthenticationFilter(JWTokenProviderService jwTokenProvider, UserDetailsService userDetailsService) {
         this.jwTokenProvider = jwTokenProvider;
         this.userDetailsService = userDetailsService;
     }
@@ -72,7 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String bearerToken = request.getHeader("Authorization");
 
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer")) {
-            return bearerToken.substring(7, bearerToken.length());
+            return bearerToken.substring(7);
 
         }
 

@@ -1,4 +1,4 @@
-package org.example.jwtauth.config;
+package org.example.jwtauth.securityConfiguration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;

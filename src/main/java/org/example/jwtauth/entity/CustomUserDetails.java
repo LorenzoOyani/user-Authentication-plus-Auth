@@ -1,25 +1,16 @@
 package org.example.jwtauth.entity;
-import org.example.jwtauth.config.JWTokenProvider;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 public  class CustomUserDetails implements UserDetails {
 
     private final User user;
-    private  JWTokenProvider   jwTokenProvider;
 
-    public CustomUserDetails(User user, JWTokenProvider jwTokenProvider) {
+    public CustomUserDetails(User user) {
         this.user = user;
-        this.jwTokenProvider = jwTokenProvider;
-    }
-
-    public CustomUserDetails(User user){
-        this.user=user;
     }
 
     public Map<String,  Object> getClaims(){

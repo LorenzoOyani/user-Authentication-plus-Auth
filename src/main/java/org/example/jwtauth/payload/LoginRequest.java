@@ -1,4 +1,4 @@
-package org.example.jwtauth.entity;
+package org.example.jwtauth.payload;
 
 import lombok.Getter;
 import lombok.Setter;

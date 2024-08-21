@@ -1,4 +1,4 @@
-package org.example.jwtauth.config;
+package org.example.jwtauth.securityConfiguration;
 
 import org.example.jwtauth.entity.CustomUserDetails;
 import org.example.jwtauth.entity.User;
