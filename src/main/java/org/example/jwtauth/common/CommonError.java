@@ -31,35 +31,22 @@ public class CommonError {
 
 
 
-    @Builder
-    private static class CommonSubError{
 
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        private String message;
-
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        private String field;
-
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        private Object value;
-
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        private String type;
-
-
-    }
 
     @Getter
     @RequiredArgsConstructor
     public enum Header{
 
-        AUTH_ERROR("AUTH_ERROR");
+        AUTH_ERROR("AUTH_ERROR", "Authentication error!");
 
 
         private String  value;
 
-        Header(String  value){
+        private String  message;
+
+        Header(String  value,  String message){
             this.value=value;
+            this.message  =message;
         }
 
     }

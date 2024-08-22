@@ -7,6 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
 
+
 public class CustomAuthToken implements Authentication {
 
     private  User user;
@@ -23,6 +24,7 @@ public class CustomAuthToken implements Authentication {
     public CustomAuthToken(CustomUserDetails    customUserDetails){
         this.customUserDetails  =customUserDetails;
     }
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

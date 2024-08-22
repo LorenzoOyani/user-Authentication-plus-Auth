@@ -12,6 +12,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 
 @Slf4j
@@ -47,7 +48,7 @@ public class JWTAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
 
         response.getOutputStream()
-                .write(responseBody.getBytes());
+                .write(responseBody.getBytes(StandardCharsets.UTF_8));
 
 
     }

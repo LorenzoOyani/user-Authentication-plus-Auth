@@ -15,8 +15,4 @@ public interface TokenService {
     void revokedToken(String token);
 
     String refreshToken(String oldToken, String newToken);
-
-    String login(LoginRequest loginRequest);
-
-    String registerUser(RegisterUserRequest registerUserRequest);
 }

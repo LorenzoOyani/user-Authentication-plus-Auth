@@ -2,6 +2,7 @@ package org.example.jwtauth.controller;
 
 import org.example.jwtauth.payload.RegisterUserRequest;
 import org.example.jwtauth.payload.TokenResponse;
+import org.example.jwtauth.service.AuthService;
 import org.example.jwtauth.service.TokenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,15 +16,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/")
 public class AuthController {
 
-    private final TokenService tokenService;
+    private final AuthService authService;
 
-    public AuthController(TokenService tokenService) {
-        this.tokenService = tokenService;
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
     @PostMapping("register")
     public ResponseEntity<TokenResponse> registerUser(@RequestBody RegisterUserRequest registerUserRequest) {
-        String token = tokenService.registerUser(registerUserRequest);
+        String token = authService.registerUser(registerUserRequest);
 
         TokenResponse tokenResponse = new TokenResponse();
 

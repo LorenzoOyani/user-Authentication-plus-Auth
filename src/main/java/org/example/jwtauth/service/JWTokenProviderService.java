@@ -6,24 +6,12 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.example.jwtauth.entity.CustomUserDetails;
 import org.example.jwtauth.entity.Token;
-import org.example.jwtauth.entity.User;
 import org.example.jwtauth.entity.enums.TokenStatus;
-import org.example.jwtauth.event.UserRegistrationEvent;
-import org.example.jwtauth.payload.LoginRequest;
-import org.example.jwtauth.payload.RegisterUserRequest;
 import org.example.jwtauth.repository.TokenRepository;
-import org.example.jwtauth.repository.UserRepository;
-import org.example.jwtauth.securityConfiguration.CustomAuthToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -38,28 +26,14 @@ public class JWTokenProviderService implements TokenService {
 
     private static final Logger log = LoggerFactory.getLogger(JWTokenProviderService.class);
 
-    @Value("${app.jwt.expiration.milliseconds}")
-    private int expiringDate;
 
     @Value("${app.jwt.secret}")
     private CharSequence jwtSecret;
 
-    private final UserRepository userRepository;
-
     private final TokenRepository tokenRepository;
 
-    private final PasswordEncoder passwordEncoder;
-
-    private final ApplicationEventPublisher applicationEventPublisher;
-
-    private final AuthenticationManager authenticationManager;
-
-    public JWTokenProviderService(UserRepository userRepository, TokenRepository tokenRepository, PasswordEncoder passwordEncoder, ApplicationEventPublisher applicationEventPublisher, AuthenticationManager authenticationManager) {
-        this.userRepository = userRepository;
+    public JWTokenProviderService( TokenRepository tokenRepository) {
         this.tokenRepository = tokenRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.applicationEventPublisher = applicationEventPublisher;
-        this.authenticationManager = authenticationManager;
     }
 
     @Override
@@ -68,7 +42,9 @@ public class JWTokenProviderService implements TokenService {
 
         Date currentDate = new Date();
 
-        Date expiringDates = new Date(currentDate.getTime() + expiringDate);
+        long expiringTime = currentDate.getTime() + 1000 * 60 * 60 * 24;
+
+        Date expiringDates = new Date(currentDate.getTime() + expiringTime);
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
@@ -84,7 +60,8 @@ public class JWTokenProviderService implements TokenService {
     }
 
     public Key key() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+        byte[] key = Decoders.BASE64.decode(jwtSecret);
+        return Keys.hmacShaKeyFor(key);
     }
 
     @Override
@@ -126,6 +103,9 @@ public class JWTokenProviderService implements TokenService {
         //extract the claims from the old token,
         // create a new token with new expiration date and sign in with same key
         Date currentDate = new Date();
+
+        long currentTime = currentDate.getTime() + 1000 * 60 * 60 * 24;
+        Date expiringDate = new Date(currentTime);
         String username = this.getUsernameFromToken(oldToken);
         Map<String, Object> claims = Jwts.parser().
                 setSigningKey(key())
@@ -138,50 +118,9 @@ public class JWTokenProviderService implements TokenService {
                 .setClaims(claims)
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(currentDate.getTime() + expiringDate))
+                .setExpiration(expiringDate)
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
-
-    }
-
-    @Override
-    public String login(LoginRequest loginRequest) {
-
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                loginRequest.getUsername(), loginRequest.getPassword()
-        ));
-
-        if (!authentication.isAuthenticated()) {
-            // do something!
-        }
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-
-        return this.generateToken(authentication);
-    }
-
-    @Override
-    public String registerUser(RegisterUserRequest registerUserRequest) {
-        User user = new User();
-        user.setUsername(registerUserRequest.getUsername());
-        user.setPassword(registerUserRequest.getPassword());
-        user.setEmail(passwordEncoder.encode(registerUserRequest.getPassword()));
-        userRepository.save(user);
-
-        Authentication authentication = new CustomAuthToken(new CustomUserDetails(user));
-        String userToken = this.generateToken(authentication);
-
-        Token token = new Token();
-        token.setUser(user);
-        token.setToken(userToken);
-        token.setExpirationTime(Instant.now().plusMillis(expiringDate));
-        token.setTokenStatus(TokenStatus.ACTIVE);
-
-        tokenRepository.save(token);
-
-        applicationEventPublisher.publishEvent(new UserRegistrationEvent(this, user));
-
-        return token.getToken();
 
     }
 
