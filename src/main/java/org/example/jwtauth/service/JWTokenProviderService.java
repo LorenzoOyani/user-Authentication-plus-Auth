@@ -6,6 +6,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.example.jwtauth.entity.CustomUserDetails;
 import org.example.jwtauth.entity.Token;
+import org.example.jwtauth.entity.enums.TokenClaims;
 import org.example.jwtauth.entity.enums.TokenStatus;
 import org.example.jwtauth.repository.TokenRepository;
 import org.slf4j.Logger;
@@ -17,12 +18,13 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.security.Key;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 
 @Service
-public class JWTokenProviderService implements TokenService {
+public class JWTokenProviderService implements JwtTokenProviderService {
 
     private static final Logger log = LoggerFactory.getLogger(JWTokenProviderService.class);
 
@@ -32,7 +34,7 @@ public class JWTokenProviderService implements TokenService {
 
     private final TokenRepository tokenRepository;
 
-    public JWTokenProviderService( TokenRepository tokenRepository) {
+    public JWTokenProviderService(TokenRepository tokenRepository) {
         this.tokenRepository = tokenRepository;
     }
 
@@ -46,17 +48,30 @@ public class JWTokenProviderService implements TokenService {
 
         Date expiringDates = new Date(currentDate.getTime() + expiringTime);
 
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-
-        Map<String, Object> claims = userDetails.getClaims();
+        final Map<String, Object> claims = getClaims(authentication, userName);
 
         return Jwts.builder()
                 .setClaims(claims)
                 .subject(userName)
-                .issuedAt(new Date())
-                .expiration(expiringDates)
                 .signWith(key())
+                .issuedAt(Date.from(Instant.now()))
+                .setExpiration(expiringDates)
                 .compact();
+
+    }
+
+    private static Map<String, Object> getClaims(Authentication authentication, String userName) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        return Map.of(
+                TokenClaims.JWT_ID.getValue(), userDetails.getUserId(),
+                TokenClaims.USER_EMAIL.getValue(), userDetails.getUserEmail(),
+                TokenClaims.USER_NAME.getValue(), userDetails.getUsername(),
+                TokenClaims.USER_ROLE.getValue(), userDetails.getAuthorities(),
+                TokenClaims.SUBJECT.getValue(), userName
+
+
+        );
     }
 
     public Key key() {

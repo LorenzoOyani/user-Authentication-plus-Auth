@@ -29,10 +29,6 @@ public class CommonError {
 
     private List<CommonSubError> subErrorList;
 
-
-
-
-
     @Getter
     @RequiredArgsConstructor
     public enum Header{

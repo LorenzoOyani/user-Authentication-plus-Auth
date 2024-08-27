@@ -1,10 +1,8 @@
 package org.example.jwtauth.service;
 
-import org.example.jwtauth.payload.LoginRequest;
-import org.example.jwtauth.payload.RegisterUserRequest;
 import org.springframework.security.core.Authentication;
 
-public interface TokenService {
+public interface JwtTokenProviderService {
 
     String generateToken(Authentication authentication);
 

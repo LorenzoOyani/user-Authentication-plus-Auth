@@ -5,6 +5,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.*;
 
+
 public  class CustomUserDetails implements UserDetails {
 
     private final User user;
@@ -13,9 +14,15 @@ public  class CustomUserDetails implements UserDetails {
         this.user = user;
     }
 
-    public Map<String,  Object> getClaims(){
-        return user.getClaims();
+    public int getUserId(){
+        return user.getId();
     }
+
+    public String getUserEmail(){
+        return  user.getEmail();
+    }
+
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

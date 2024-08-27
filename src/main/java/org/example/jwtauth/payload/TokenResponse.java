@@ -7,5 +7,5 @@ import lombok.Setter;
 @Getter
 public class TokenResponse {
 
-    private String accessToken;
+    private String responseToken;
 }

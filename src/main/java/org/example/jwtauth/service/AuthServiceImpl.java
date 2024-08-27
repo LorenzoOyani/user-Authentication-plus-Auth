@@ -2,12 +2,14 @@ package org.example.jwtauth.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.jwtauth.entity.CustomUserDetails;
+import org.example.jwtauth.entity.Mapper.TokenTokenResponseMapper;
 import org.example.jwtauth.entity.Token;
 import org.example.jwtauth.entity.User;
 import org.example.jwtauth.entity.enums.TokenStatus;
 import org.example.jwtauth.event.UserRegistrationEvent;
 import org.example.jwtauth.payload.LoginRequest;
 import org.example.jwtauth.payload.RegisterUserRequest;
+import org.example.jwtauth.payload.TokenResponse;
 import org.example.jwtauth.repository.TokenRepository;
 import org.example.jwtauth.repository.UserRepository;
 import org.example.jwtauth.securityConfiguration.CustomAuthToken;
@@ -40,17 +42,23 @@ public class AuthServiceImpl implements AuthService{
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    private final CustomAuthToken  customAuthToken;
+
+    private final TokenTokenResponseMapper  tokenTokenResponseMapper;
+
     @Value("${app.jwt.expiration.milliseconds}")
     private int expiringDate;
 
 
-    public AuthServiceImpl(AuthenticationManager authenticationManager, JWTokenProviderService jwTokenProviderService, PasswordEncoder passwordEncoder, UserRepository userRepository, TokenRepository tokenRepository, ApplicationEventPublisher applicationEventPublisher) {
+    public AuthServiceImpl(AuthenticationManager authenticationManager, JWTokenProviderService jwTokenProviderService, PasswordEncoder passwordEncoder, UserRepository userRepository, TokenRepository tokenRepository, ApplicationEventPublisher applicationEventPublisher, CustomAuthToken customAuthToken, TokenTokenResponseMapper tokenTokenResponseMapper) {
         this.authenticationManager = authenticationManager;
         this.jwTokenProviderService = jwTokenProviderService;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.applicationEventPublisher = applicationEventPublisher;
+        this.customAuthToken = customAuthToken;
+        this.tokenTokenResponseMapper = tokenTokenResponseMapper;
     }
 
     @Override
@@ -60,7 +68,7 @@ public class AuthServiceImpl implements AuthService{
                 loginRequest.getUsername(), loginRequest.getPassword()
         ));
 
-        if (!authentication.isAuthenticated()) {
+        if (!customAuthToken.isAuthenticated()) {
             log.error("login failed for username {}", loginRequest.getUsername());
             throw new BadCredentialsException("Authentication for username fail "+ loginRequest.getUsername());
         }
@@ -87,6 +95,11 @@ public class AuthServiceImpl implements AuthService{
         token.setToken(userToken);
         token.setExpirationTime(Instant.now().plusMillis(expiringDate));
         token.setTokenStatus(TokenStatus.ACTIVE);
+
+
+
+
+
 
         tokenRepository.save(token);
 
