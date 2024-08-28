@@ -1,10 +1,11 @@
-package org.example.jwtauth.globalErrorHandler;
+package org.example.jwtauth.Exceptions;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.springframework.validation.FieldError;
 
 import java.util.List;
+
+import static java.util.Arrays.stream;
 
 @Getter
 public class ValidationException extends RuntimeException {
@@ -18,5 +19,6 @@ public class ValidationException extends RuntimeException {
     ValidationException(String message, FieldError fieldError) {
         this(message);
         this.fieldErrors.add(fieldError);
+
     }
 }

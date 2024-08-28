@@ -10,7 +10,5 @@ public interface JwtTokenProviderService {
 
     boolean validateToken(String token);
 
-    void revokedToken(String token);
-
     String refreshToken(String oldToken, String newToken);
 }

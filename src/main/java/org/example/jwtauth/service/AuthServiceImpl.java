@@ -1,15 +1,15 @@
 package org.example.jwtauth.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.example.jwtauth.entity.CustomUserDetails;
+import org.example.jwtauth.entity.*;
 import org.example.jwtauth.entity.Mapper.TokenTokenResponseMapper;
-import org.example.jwtauth.entity.Token;
-import org.example.jwtauth.entity.User;
+import org.example.jwtauth.entity.Mapper.UserMapper;
 import org.example.jwtauth.entity.enums.TokenStatus;
+import org.example.jwtauth.entity.enums.TokenType;
 import org.example.jwtauth.event.UserRegistrationEvent;
+import org.example.jwtauth.payload.JwtResponse;
 import org.example.jwtauth.payload.LoginRequest;
 import org.example.jwtauth.payload.RegisterUserRequest;
-import org.example.jwtauth.payload.TokenResponse;
 import org.example.jwtauth.repository.TokenRepository;
 import org.example.jwtauth.repository.UserRepository;
 import org.example.jwtauth.securityConfiguration.CustomAuthToken;
@@ -21,6 +21,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,54 +29,68 @@ import java.time.Instant;
 
 @Slf4j
 @Service
-public class AuthServiceImpl implements AuthService{
+public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
 
     private final JWTokenProviderService jwTokenProviderService;
 
-    private final PasswordEncoder  passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     private final UserRepository userRepository;
 
-    private final TokenRepository  tokenRepository;
+    private final TokenRepository tokenRepository;
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    private final CustomAuthToken  customAuthToken;
+    private  CustomAuthToken customAuthToken;
 
-    private final TokenTokenResponseMapper  tokenTokenResponseMapper;
+    private  RefreshTokenService refreshTokenService;
+
+    private UserMapper userMapper;
 
     @Value("${app.jwt.expiration.milliseconds}")
     private int expiringDate;
 
 
-    public AuthServiceImpl(AuthenticationManager authenticationManager, JWTokenProviderService jwTokenProviderService, PasswordEncoder passwordEncoder, UserRepository userRepository, TokenRepository tokenRepository, ApplicationEventPublisher applicationEventPublisher, CustomAuthToken customAuthToken, TokenTokenResponseMapper tokenTokenResponseMapper) {
+    public AuthServiceImpl(AuthenticationManager authenticationManager, JWTokenProviderService jwTokenProviderService, PasswordEncoder passwordEncoder, UserRepository userRepository, TokenRepository tokenRepository, ApplicationEventPublisher applicationEventPublisher, TokenTokenResponseMapper tokenTokenResponseMapper) {
         this.authenticationManager = authenticationManager;
         this.jwTokenProviderService = jwTokenProviderService;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.applicationEventPublisher = applicationEventPublisher;
-        this.customAuthToken = customAuthToken;
-        this.tokenTokenResponseMapper = tokenTokenResponseMapper;
     }
 
     @Override
-    public String login(LoginRequest loginRequest) {
-
+    public JwtResponse login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 loginRequest.getUsername(), loginRequest.getPassword()
         ));
 
         if (!customAuthToken.isAuthenticated()) {
             log.error("login failed for username {}", loginRequest.getUsername());
-            throw new BadCredentialsException("Authentication for username fail "+ loginRequest.getUsername());
+            throw new BadCredentialsException("Authentication for username failed " + loginRequest.getUsername());
         }
+
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
 
-        return jwTokenProviderService.generateToken(authentication);
+        String token = this.jwTokenProviderService.generateToken(authentication);
+
+        //working with real entities in DBMS!!
+        User newUserObject = userRepository.findUserByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("failure to find user email: " + loginRequest.getEmail()));
+
+        // model mappers!!
+
+        final String refreshedToken = refreshTokenService.refreshToken(newUserObject);
+        return JwtResponse.builder()
+                .tokenType(TokenType.valueOf(TokenType.BEARER.toString()))
+                .refreshToken(refreshedToken)
+                .token(token)
+                .email(newUserObject.getEmail())
+                .build();
 
     }
 
@@ -95,11 +110,6 @@ public class AuthServiceImpl implements AuthService{
         token.setToken(userToken);
         token.setExpirationTime(Instant.now().plusMillis(expiringDate));
         token.setTokenStatus(TokenStatus.ACTIVE);
-
-
-
-
-
 
         tokenRepository.save(token);
 

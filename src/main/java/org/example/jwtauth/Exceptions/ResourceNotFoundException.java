@@ -1,4 +1,4 @@
-package org.example.jwtauth.globalErrorHandler;
+package org.example.jwtauth.Exceptions;
 
 public class ResourceNotFoundException extends RuntimeException{
 

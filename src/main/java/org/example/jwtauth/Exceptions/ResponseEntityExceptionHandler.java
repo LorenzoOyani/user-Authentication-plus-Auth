@@ -1,9 +1,10 @@
-package org.example.jwtauth.globalErrorHandler;
+package org.example.jwtauth.Exceptions;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.example.jwtauth.common.CommonSubError;
 import jakarta.validation.ConstraintViolationException;
+import org.example.jwtauth.globalErrorHandler.ErrorResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

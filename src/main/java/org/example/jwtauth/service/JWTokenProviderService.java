@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class JWTokenProviderService implements JwtTokenProviderService {
@@ -92,11 +93,17 @@ public class JWTokenProviderService implements JwtTokenProviderService {
 
     @Override
     public boolean validateToken(String token) {
-        Optional<Token> tokens = tokenRepository.findTokenById(token);
-        if (tokens.isPresent()) {
-            Token token1 = tokens.get();
-            revokedToken(token1.toString());
-            return false;
+        Optional<Token> existingTokens = tokenRepository.findTokenById(token);
+
+        if (existingTokens.isPresent()) {
+            Token newTokens = existingTokens.get();
+
+            if(newTokens.isRevoke()){
+                return false; // not valid token!
+            }
+            newTokens.setRevoke(true); //valid token, hence can be validated.
+            tokenRepository.save(newTokens);
+            return false; // token is revoked so it is not valid
         }
         try {
             Jwts.parser()
@@ -118,7 +125,6 @@ public class JWTokenProviderService implements JwtTokenProviderService {
         //extract the claims from the old token,
         // create a new token with new expiration date and sign in with same key
         Date currentDate = new Date();
-
         long currentTime = currentDate.getTime() + 1000 * 60 * 60 * 24;
         Date expiringDate = new Date(currentTime);
         String username = this.getUsernameFromToken(oldToken);
@@ -141,10 +147,11 @@ public class JWTokenProviderService implements JwtTokenProviderService {
 
     public void revokedToken(String tokens) {
         Token token = tokenRepository.findTokenById(tokens).orElseThrow(() -> new RuntimeException("token not found"));
-
         token.setTokenStatus(TokenStatus.REVOKE);
+        token.setRevoke(true);
         tokenRepository.save(token);
     }
+
 
     public void deleteExpiredToken(Long tokens) {
         Token token = tokenRepository.getReferenceById(tokens);
@@ -156,7 +163,7 @@ public class JWTokenProviderService implements JwtTokenProviderService {
 
         token.setExpirationTime(timeBtwDates.toInstant());
 
-        if (token.getExpirationTime().isBefore(Instant.now())) {
+        if (token.getExpirationTime().isAfter(Instant.now())) {
             tokenRepository.delete(token); // remove expired token from dataBase
         }
 

@@ -31,7 +31,7 @@ public class Token {
 
     private Instant expirationTime;
 
-
+    private boolean isRevoke = true;
 
 
     @ManyToOne(fetch = FetchType.LAZY)
