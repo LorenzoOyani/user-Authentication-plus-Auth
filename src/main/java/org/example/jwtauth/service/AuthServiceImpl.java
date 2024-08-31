@@ -43,7 +43,6 @@ public class AuthServiceImpl implements AuthService {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    private  CustomAuthToken customAuthToken;
 
     private  RefreshTokenService refreshTokenService;
 
@@ -64,11 +63,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public JwtResponse login(LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                loginRequest.getUsername(), loginRequest.getPassword()
-        ));
-
-        if (!customAuthToken.isAuthenticated()) {
+        Authentication authentication = userAuthentication(loginRequest);
+        if (authentication.isAuthenticated()) {
             log.error("login failed for username {}", loginRequest.getUsername());
             throw new BadCredentialsException("Authentication for username failed " + loginRequest.getUsername());
         }
@@ -79,12 +75,10 @@ public class AuthServiceImpl implements AuthService {
         String token = this.jwTokenProviderService.generateToken(authentication);
 
         //working with real entities in DBMS!!
-        User newUserObject = userRepository.findUserByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("failure to find user email: " + loginRequest.getEmail()));
+        User newUserObject = findUserByEmail(loginRequest);
+        String newToken = this.jwTokenProviderService.generateToken(newUserObject.getUsername());
 
-        // model mappers!!
-
-        final String refreshedToken = refreshTokenService.refreshToken(newUserObject);
+        final String refreshedToken = this.jwTokenProviderService.refreshToken(token,  newToken);
         return JwtResponse.builder()
                 .tokenType(TokenType.valueOf(TokenType.BEARER.toString()))
                 .refreshToken(refreshedToken)
@@ -92,6 +86,17 @@ public class AuthServiceImpl implements AuthService {
                 .email(newUserObject.getEmail())
                 .build();
 
+    }
+
+    private User findUserByEmail(LoginRequest loginRequest) {
+        return userRepository.findUserByEmail(loginRequest.getEmail())
+                .orElseThrow(()-> new UsernameNotFoundException("user cannot be found!"));
+    }
+
+    private Authentication userAuthentication(LoginRequest loginRequest) {
+        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                loginRequest.getUsername(), loginRequest.getPassword()
+        ));
     }
 
     @Override
@@ -117,5 +122,10 @@ public class AuthServiceImpl implements AuthService {
 
         return token.getToken();
 
+    }
+
+    @Override
+    public Token logout(String token) {
+        return null;
     }
 }

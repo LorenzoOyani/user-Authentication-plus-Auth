@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@RequiredArgsConstructor
 @Builder
 @Entity
 public class RefreshedToken extends BaseEntity {
@@ -30,6 +31,15 @@ public class RefreshedToken extends BaseEntity {
 
     private boolean isActive = true;
 
-    private boolean isValid = true;
+    private boolean isValid;
+
+    public RefreshedToken(Long id, boolean isValid) {
+        this.id = id;
+        this.isValid = isValid;
+    }
+
+    public RefreshedToken withValidToken(){
+        return new RefreshedToken(this.id,  isValid);
+    }
 
 }

@@ -5,7 +5,7 @@ import org.example.jwtauth.entity.User;
 public interface RefreshTokenService {
 
 
-    String refreshToken(User user);
+    String updateRefreshToken(User user);
 
 
 }

@@ -1,6 +1,7 @@
 package org.example.jwtauth.service;
 
 import org.example.jwtauth.entity.RefreshedToken;
+import org.example.jwtauth.entity.Token;
 import org.example.jwtauth.repository.RefreshTokenRepository;
 import org.springframework.stereotype.Service;
 
@@ -36,5 +37,10 @@ public class TokenServicesImpl implements TokenServices {
             return false;
         }
         return false;
+    }
+
+    @Override
+    public Token checkAndInvalidate(String token) {
+        return null;
     }
 }
