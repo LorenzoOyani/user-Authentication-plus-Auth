@@ -1,5 +1,6 @@
 package org.example.jwtauth.service;
 
+import org.example.jwtauth.entity.User;
 import org.springframework.security.core.Authentication;
 
 public interface JwtTokenProviderService {

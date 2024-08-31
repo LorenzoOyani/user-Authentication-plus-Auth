@@ -17,30 +17,37 @@ public class TokenServicesImpl implements TokenServices {
     }
 
     @Override
-    public boolean validateToken(RefreshedToken token) {
-        Optional<RefreshedToken> optionalRefreshToken = refreshTokenRepository.findByTokenId(token.getId());
+   public boolean validateToken(RefreshedToken token) {
+//        Optional<RefreshedToken> optionalRefreshToken = refreshTokenRepository.findByTokenId(token.getId());
+//
+//        //use optionals to avoid null checks and handle absent values elegantly!
+//
+//        //todo
+//        //Refactor to leverage immutability, and elegant side-effect!
+//        RefreshedToken newRefreshedToken;
+//        if (optionalRefreshToken.isPresent()) {
+//            newRefreshedToken = optionalRefreshToken.get();
+//
+//            if(!newRefreshedToken.isValid()){
+//                return false;
+//            }
+//            newRefreshedToken.setValid(true);
+//            refreshTokenRepository.save(newRefreshedToken);
+//
+//            return false;
+//        }
+//        return false;
 
-        //use optionals to avoid null checks and handle absent values elegantly!
 
-        //todo
-        //Refactor to leverage immutability, and elegant side-effect!
-        RefreshedToken newRefreshedToken;
-        if (optionalRefreshToken.isPresent()) {
-            newRefreshedToken = optionalRefreshToken.get();
+        return refreshTokenRepository.findByTokenId(token.getId())
+                .filter(RefreshedToken::isValid)
+                .map(validToken -> {
+                    RefreshedToken updatedToken = validToken.withValidToken();
 
-            if(!newRefreshedToken.isValid()){
-                return false;
-            }
-            newRefreshedToken.setValid(true);
-            refreshTokenRepository.save(newRefreshedToken);
-
-            return false;
-        }
-        return false;
+                } )
     }
 
     @Override
-    public Token checkAndInvalidate(String token) {
-        return null;
+    public void  checkAndInvalidate(String token) {
     }
 }

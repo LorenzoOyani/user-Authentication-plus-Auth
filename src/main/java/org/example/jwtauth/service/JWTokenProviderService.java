@@ -31,6 +31,8 @@ public class JWTokenProviderService implements JwtTokenProviderService {
 
     private static final Logger log = LoggerFactory.getLogger(JWTokenProviderService.class);
 
+    private final long TOKEN_EXPIRATION_TIME = 1000 * 60 * 60 * 24;
+
 
     @Value("${app.jwt.secret}")
     private CharSequence jwtSecret;
@@ -50,7 +52,7 @@ public class JWTokenProviderService implements JwtTokenProviderService {
 
         Date currentDate = new Date();
 
-        long expiringTime = currentDate.getTime() + 1000 * 60 * 60 * 24;
+        long expiringTime = currentDate.getTime() + TOKEN_EXPIRATION_TIME;
 
         Date expiringDates = new Date(currentDate.getTime() + expiringTime);
 
@@ -76,6 +78,13 @@ public class JWTokenProviderService implements JwtTokenProviderService {
     }
 
     private Map<String, Object> getClaims(String username, User user) {
+        return Map.of(
+                TokenClaims.USER_ID.getValue(), user.getId(),
+                TokenClaims.USER_NAME.getValue(), username,
+                TokenClaims.USER_EMAIL.getValue(), user.getEmail(),
+                TokenClaims.USER_ROLE.getValue(), user.getRoles(),
+                TokenClaims.USER_STATUS.getValue(), user.getUserStatus()
+        );
 
     }
 
@@ -86,39 +95,28 @@ public class JWTokenProviderService implements JwtTokenProviderService {
 
     @Override
     public String getUsernameFromToken(String token) {
+
         return Jwts.parser()
                 .setSigningKey(key())
                 .build()
-                .parseSignedClaims(token)
+                .parseClaimsJws(token)
                 .getPayload()
                 .getSubject();
-
     }
 
     @Override
     public boolean validateToken(String token) {
-        Optional<Token> existingTokens = tokenRepository.findTokenById(token);
+        Optional<Token> optionalToken = Optional.ofNullable(tokenRepository.findTokenByToken(token)
+                .orElseThrow(() -> new RuntimeException("token not found!")));
 
-        if (existingTokens.isPresent()) {
-            Token newTokens = existingTokens.get();
 
-            if(newTokens.isRevoke()){
-                return false; // not valid token!
+        if(optionalToken.isPresent()){
+            Token newTokenInstance = optionalToken.get();
+
+            if(!newTokenInstance.isValidToken()){
+                return  false;
             }
-            newTokens.setTokenStatus(TokenStatus.ACTIVE); //valid token, hence can be validated.
-            tokenRepository.save(newTokens);
-            return false; // token is revoked so it is not valid
-        }
-        try {
-            Jwts.parser()
-                    .verifyWith((SecretKey) key())
-                    .build()
-                    .parse(token);
 
-            return true;
-        } catch (Exception e) {
-            log.info("error validating this token with message {}", e.getMessage());
-            return false;
 
         }
     }
@@ -128,9 +126,10 @@ public class JWTokenProviderService implements JwtTokenProviderService {
         //todo
         //extract the claims from the old token,
         // create a new token with new expiration date and sign in with same key
-        Date currentDate = new Date();
-        long currentTime = currentDate.getTime() + 1000 * 60 * 60 * 24;
-        Date expiringDate = new Date(currentTime);
+        Instant now = Instant.now();
+
+        Instant expiringDate = now.plusMillis(TOKEN_EXPIRATION_TIME);
+
         String username = this.getUsernameFromToken(oldToken);
         Map<String, Object> claims = Jwts.parser().
                 setSigningKey(key())
@@ -143,16 +142,16 @@ public class JWTokenProviderService implements JwtTokenProviderService {
                 .setClaims(claims)
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(expiringDate)
+                .setExpiration(Date.from(expiringDate))
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
 
     }
 
-    public void revokedToken(String tokens) {
-        Token token = tokenRepository.findTokenById(tokens).orElseThrow(() -> new RuntimeException("token not found"));
+    public void revokedToken(Long tokens) {
+        Token token = tokenRepository.findTokenById(tokens)
+                .orElseThrow(() -> new RuntimeException("token not found"));
         token.setTokenStatus(TokenStatus.REVOKE);
-        token.setTokenType(TokenType.BEARER);
         tokenRepository.save(token);
     }
 
@@ -168,18 +167,16 @@ public class JWTokenProviderService implements JwtTokenProviderService {
         token.setExpirationTime(timeBtwDates.toInstant());
 
         if (token.getExpirationTime().isAfter(Instant.now())) {
-            tokenRepository.delete(token); // remove expired token from dataBase
+            tokenRepository.delete(token);
         }
 
     }
 
     public String generateToken(String username) {
-        User user =userRepository.findByUsernameOrEmail(username,   username)
-                .orElseThrow(()->new UsernameNotFoundException(""));
-
-        Map<String, Object> claims  =  getClaims(username,  user);
-
-        return  Jwts.builder()
+        User user = userRepository.findByUsernameOrEmail(username, username)
+                .orElseThrow(() -> new UsernameNotFoundException(""));
+        Map<String, Object> claims = getClaims(username, user);
+        return Jwts.builder()
                 .claims(claims)
                 .subject(username)
                 .signWith(key())

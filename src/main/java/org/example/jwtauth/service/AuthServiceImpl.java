@@ -107,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(passwordEncoder.encode(registerUserRequest.getPassword()));
         userRepository.save(user);
 
-        Authentication authentication = new CustomAuthToken(new CustomUserDetails(user));
+        Authentication authentication = new CustomAuthToken(new CustomUserDetails(user)); // concrete impl
         String userToken = this.jwTokenProviderService.generateToken(authentication);
 
         Token token = new Token();

@@ -7,6 +7,6 @@ public interface TokenServices {
 
     boolean validateToken(RefreshedToken token);
 
-    Token checkAndInvalidate(String token);
+    void checkAndInvalidate(String token);
 
 }
