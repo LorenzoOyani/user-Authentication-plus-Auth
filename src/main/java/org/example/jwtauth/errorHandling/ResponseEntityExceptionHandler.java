@@ -1,7 +1,10 @@
-package org.example.jwtauth.Exceptions;
+package org.example.jwtauth.errorHandling;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.example.jwtauth.exceptions.ResourceNotFoundException;
+import org.example.jwtauth.exceptions.UserAlreadyExistError;
+import org.example.jwtauth.exceptions.ValidationException;
 import org.example.jwtauth.common.CommonSubError;
 import jakarta.validation.ConstraintViolationException;
 import org.example.jwtauth.globalErrorHandler.ErrorResponse;
@@ -74,7 +77,7 @@ public class ResponseEntityExceptionHandler {
             message.add(error.getField() + " " + error.getDefaultMessage());
         }
 
-        return new ErrorResponse(message);
+        return new ErrorResponse(message.toString());
     }
 
     private CommonSubError createResponse(final ConstraintViolationException ex) {

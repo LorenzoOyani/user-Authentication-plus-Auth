@@ -13,6 +13,7 @@ import org.example.jwtauth.payload.RegisterUserRequest;
 import org.example.jwtauth.repository.TokenRepository;
 import org.example.jwtauth.repository.UserRepository;
 import org.example.jwtauth.securityConfiguration.CustomAuthToken;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -44,14 +45,14 @@ public class AuthServiceImpl implements AuthService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
 
-    private  RefreshTokenService refreshTokenService;
+    private RefreshTokenService refreshTokenService;
 
     private UserMapper userMapper;
 
     @Value("${app.jwt.expiration.milliseconds}")
     private int expiringDate;
 
-
+    @Autowired
     public AuthServiceImpl(AuthenticationManager authenticationManager, JWTokenProviderService jwTokenProviderService, PasswordEncoder passwordEncoder, UserRepository userRepository, TokenRepository tokenRepository, ApplicationEventPublisher applicationEventPublisher, TokenTokenResponseMapper tokenTokenResponseMapper) {
         this.authenticationManager = authenticationManager;
         this.jwTokenProviderService = jwTokenProviderService;
@@ -74,11 +75,12 @@ public class AuthServiceImpl implements AuthService {
 
         String token = this.jwTokenProviderService.generateToken(authentication);
 
-        //working with real entities in DBMS!!
+
         User newUserObject = findUserByEmail(loginRequest);
         String newToken = this.jwTokenProviderService.generateToken(newUserObject.getUsername());
 
-        final String refreshedToken = this.jwTokenProviderService.refreshToken(token,  newToken);
+
+        final String refreshedToken = this.jwTokenProviderService.refreshToken(token, newToken);
         return JwtResponse.builder()
                 .tokenType(TokenType.valueOf(TokenType.BEARER.toString()))
                 .refreshToken(refreshedToken)
@@ -90,7 +92,7 @@ public class AuthServiceImpl implements AuthService {
 
     private User findUserByEmail(LoginRequest loginRequest) {
         return userRepository.findUserByEmail(loginRequest.getEmail())
-                .orElseThrow(()-> new UsernameNotFoundException("user cannot be found!"));
+                .orElseThrow(() -> new UsernameNotFoundException("user cannot be found!"));
     }
 
     private Authentication userAuthentication(LoginRequest loginRequest) {
@@ -125,7 +127,18 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Token logout(String token) {
-        return null;
+    public String logout(String token) {
+        String tokens = this.jwTokenProviderService.getBearerToken(token);
+
+        if (this.jwTokenProviderService.validateToken(tokens)) {
+            Long id = this.jwTokenProviderService.getIdFromToken(tokens);
+
+            this.jwTokenProviderService.deleteExpiredToken(id);
+
+            return "success";
+
+        }
+
+        return "fail";
     }
 }

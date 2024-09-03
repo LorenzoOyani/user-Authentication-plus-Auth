@@ -1,10 +1,7 @@
 package org.example.jwtauth.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.example.jwtauth.entity.enums.Roles;
 import org.example.jwtauth.entity.enums.UserStatus;
 
@@ -12,6 +9,7 @@ import org.example.jwtauth.entity.enums.UserStatus;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
 public class User  extends BaseEntity  {
 

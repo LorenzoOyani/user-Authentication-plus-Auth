@@ -11,7 +11,7 @@ public interface AuthService {
 
     String registerUser(RegisterUserRequest registerUserRequest);
 
-    Token logout(String token);
+    String logout(String token);
 
 
 

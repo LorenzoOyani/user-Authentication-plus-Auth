@@ -13,17 +13,12 @@ import java.util.List;
 public class ErrorResponse {
 
     @Builder.Default
-    private LocalDateTime  localDateTime=LocalDateTime.now();
+    private LocalDateTime localDateTime = LocalDateTime.now();
 
-    private List<String>    messages;
+    private List<String> messages;
 
-    ErrorResponse(List<String> messages){
-        this.localDateTime=LocalDateTime.now();
-        this.messages=messages;
-    }
-
-    ErrorResponse(String  messages){
-        this.localDateTime=LocalDateTime.now();
+    public ErrorResponse(String messages) {
+        this.localDateTime = LocalDateTime.now();
         this.messages.add(messages);
     }
 

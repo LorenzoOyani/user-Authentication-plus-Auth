@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface TokenRepository extends JpaRepository<Token, Long> {
     Optional<Token> findTokenById(Long id);
 
-    Optional<Token> findTokenByToken(String token);
+    Token findTokenByToken(String token);
 
 
 

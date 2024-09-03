@@ -5,8 +5,7 @@ import lombok.Getter;
 @Getter
 public enum CustomErrorResponse {
 
-    USER_ALREADY_EXISTS("INTERNAL_SERVER_ERROR", "user already exist!"),
-    RESOURCE_NOT_FOUND("RESOURCE_NOT_FOUND", "resource already exist!");
+    USER_ALREADY_EXISTS("INTERNAL_SERVER_ERROR", "user already exist!");
 
 
     private final String error;

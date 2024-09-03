@@ -12,8 +12,6 @@ public class JwtResponse {
 
     private TokenType tokenType;
 
-
-
     private String refreshToken;
 
     private String email;

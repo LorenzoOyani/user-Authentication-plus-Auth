@@ -1,8 +1,7 @@
-package org.example.jwtauth.globalErrorHandler;
+package org.example.jwtauth.exceptions;
 
 import lombok.Getter;
-
-import java.util.concurrent.CompletableFuture;
+import org.example.jwtauth.globalErrorHandler.CustomErrorResponse;
 
 @Getter
 public class GlobalErrorResponse extends RuntimeException {

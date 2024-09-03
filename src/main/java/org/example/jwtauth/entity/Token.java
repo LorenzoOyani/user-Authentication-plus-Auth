@@ -8,13 +8,15 @@ import org.example.jwtauth.entity.enums.TokenType;
 import java.time.Instant;
 
 @Entity
+@Table(name = "Token", indexes = {
+        @Index(name = "idx_token_token_unq", columnList = "token", unique = true)
+})
 @Getter
 @Setter
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
 public class Token {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,9 +32,6 @@ public class Token {
     private TokenType tokenType;
 
     private Instant expirationTime;
-
-    private boolean isValidToken;
-
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "USER_TOKEN_FK"))

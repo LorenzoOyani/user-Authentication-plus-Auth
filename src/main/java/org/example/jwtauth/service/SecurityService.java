@@ -20,16 +20,5 @@ public class SecurityService {
                 .map(jwt -> ((Jwt) jwt).getClaimAsString(TokenClaims.USER_EMAIL.getValue()))
                 .filter(username -> !"anonymous".equals(username))
                 .orElse(null);
-
     }
-
-//    public String getUsernameFromAuthentication() {
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
-//
-//            return userDetails.getUsername();
-//        }
-//        return "anonymousUser";
-//    }
-
 }

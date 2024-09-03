@@ -1,12 +1,18 @@
 package org.example.jwtauth.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.jwtauth.entity.RefreshedToken;
+import org.example.jwtauth.entity.RefreshedTokenFactory;
 import org.example.jwtauth.entity.Token;
+import org.example.jwtauth.exceptions.InvalidTokenException;
 import org.example.jwtauth.repository.RefreshTokenRepository;
 import org.springframework.stereotype.Service;
 
+import java.sql.Time;
+import java.time.Instant;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class TokenServicesImpl implements TokenServices {
 
@@ -17,37 +23,45 @@ public class TokenServicesImpl implements TokenServices {
     }
 
     @Override
-   public boolean validateToken(RefreshedToken token) {
-//        Optional<RefreshedToken> optionalRefreshToken = refreshTokenRepository.findByTokenId(token.getId());
-//
-//        //use optionals to avoid null checks and handle absent values elegantly!
-//
-//        //todo
-//        //Refactor to leverage immutability, and elegant side-effect!
-//        RefreshedToken newRefreshedToken;
-//        if (optionalRefreshToken.isPresent()) {
-//            newRefreshedToken = optionalRefreshToken.get();
-//
-//            if(!newRefreshedToken.isValid()){
-//                return false;
-//            }
-//            newRefreshedToken.setValid(true);
-//            refreshTokenRepository.save(newRefreshedToken);
-//
-//            return false;
-//        }
-//        return false;
+    public boolean validateRefreshedToken(RefreshedToken token) {
+        Optional<RefreshedToken> optionalRefreshToken = refreshTokenRepository.findByTokenId(token.getId());
 
+        RefreshedToken newRefreshedToken;
+        if (optionalRefreshToken.isPresent()) {
+            newRefreshedToken = optionalRefreshToken.get();
 
-        return refreshTokenRepository.findByTokenId(token.getId())
-                .filter(RefreshedToken::isValid)
-                .map(validToken -> {
-                    RefreshedToken updatedToken = validToken.withValidToken();
+            if (!newRefreshedToken.isValid()) {
+                return false;
+            }
+            RefreshedToken refreshedToken= RefreshedTokenFactory.isWithValidToken(true);
+            refreshTokenRepository.save(refreshedToken);
 
-                } )
+            return false;
+        }
+        return false;
+
     }
 
     @Override
-    public void  checkAndInvalidate(String token) {
+    public void checkAndInvalidate(String token) {
+        RefreshedToken tokenDb = refreshTokenRepository.findByToken(token);
+        if (tokenDb == null) {
+            log.info("Invalid token ");
+            throw new InvalidTokenException("cannot Invalidate Token");
+        }
+        if(tokenDb.getExpiringDate().isBefore(Instant.now())){
+            refreshTokenRepository.delete(tokenDb);
+            log.info("token {}, already deleted!", tokenDb);
+        }
+
+
+    }
+
+    @Override
+    public boolean isValidToken(String token) {
+        RefreshedToken currentToken = refreshTokenRepository.findByToken(token);
+        if (currentToken == null) return false;
+        return currentToken.isValid();
+
     }
 }

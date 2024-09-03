@@ -1,4 +1,4 @@
-package org.example.jwtauth.Exceptions;
+package org.example.jwtauth.exceptions;
 
 import org.example.jwtauth.globalErrorHandler.CustomErrorResponse;
 
