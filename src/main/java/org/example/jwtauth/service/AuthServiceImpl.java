@@ -81,6 +81,7 @@ public class AuthServiceImpl implements AuthService {
 
 
         final String refreshedToken = this.jwTokenProviderService.refreshToken(token, newToken);
+
         return JwtResponse.builder()
                 .tokenType(TokenType.valueOf(TokenType.BEARER.toString()))
                 .refreshToken(refreshedToken)

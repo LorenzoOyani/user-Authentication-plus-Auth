@@ -4,10 +4,12 @@ import jakarta.servlet.DispatcherType;
 import org.example.jwtauth.entity.enums.Roles;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,12 +26,16 @@ public class SpringSecurityConfiguration {
                 .authorizeHttpRequests((authorize) -> {
                     authorize
                             .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-                            .requestMatchers("/signup", "/about", "/static/**").permitAll()
                             .requestMatchers("/admin").hasAuthority(Roles.ROLE_ADMIN.name())
                             .requestMatchers("/user").hasAuthority(Roles.ROLE_USER.name())
-                            .anyRequest().authenticated();
+                            .requestMatchers(HttpMethod.POST,
+                                    "./api/register",
+                                    "/api/login"
+                                    ).permitAll().anyRequest().authenticated();
 
-                }).formLogin(Customizer.withDefaults());
+                }).formLogin(Customizer.withDefaults())
+                .sessionManagement(customizer ->  customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
 
 
         return http.build();
